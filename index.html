@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Persistent XSS Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            font-family: Arial, sans-serif;
+        }
+
+        .top-left {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 35px;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        
+        .left, .right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            font-size: 18px;
+        }
+
+        .left {
+            background-color: #f0f0f0;
+            border-right: 2px solid #ccc;
+            margin-top: 60px;
+        }
+
+        .right {
+            background-color: #dff0ff;
+        }
+
+        .testing-tabs {
+            display: flex;
+            width: 100%;
+            background-color: #c0e4ff;
+            justify-content: center;
+        }
+
+        .testing-tab {
+            flex: 1; /* 👈 This makes each tab fill equal space */
+            padding: 10px 0;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 30px;
+        }
+
+        .testing-tab.active {
+            background-color: #ffffff;
+            border-bottom: 2px solid white;
+        }
+
+        .testing-tab-content {
+            flex: 1;
+            padding: 20px;
+            display: none;
+        }
+
+        .testing-tab-content.active {
+            display: flex;
+        }
+
+        #sandbox {
+            padding: 20px;
+        }
+
+        .sandbox-title {
+            padding-bottom: 20px;
+        }
+
+        #resetCodeBtn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 10px 16px;
+            background-color: white;
+            color: black;
+            font-size: 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .instructions {
+            font-size: 16px;
+            line-height: 1.4;
+            color: #222;
+            margin: 20px;
+        }
+
+        #editor {
+            font-family: monospace;
+        }
+
+        .line-numbers {
+            color: white;
+            background-color: #252533;
+            text-align: right;
+            width: 30px;
+            overflow: hidden;
+            font-family: inherit;
+            font-size: 12px;
+            line-height: 1.4;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-right: 10px;
+            font-size: 12px;
+            margin-bottom: 0px;
+            padding-bottom: 0px;
+            margin: 0px;
+            white-space: pre-wrap;
+        }
+
+        #editorArea {
+            color: white;
+            background-color: #252533;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-left: 1px;
+            border: none;
+            resize: none;
+            outline: none;
+            overflow: auto;
+            font-family: inherit;
+            line-height: 1.4;
+            font-size: 12px;
+            flex: 1;
+            width: 100%;
+            resize: none;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100vh;
+            border: 0px solid #ccc;
+            margin-top: 0px;
+            display: block;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        code {
+            background-color: #d0d0d0;
+            color: #c7254e;
+            padding: 3px;
+            font-size: 14px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="top-left">Persistent Cross-Site Scripting (XSS)</div><hr style="
+    position: absolute;
+    top: 55px;
+    left: 0px;
+    width: 100%;
+    height: 5px;
+    background-color: black;
+    border: none;
+">
+    <div class="container">
+        <div class="left">
+            <div class="instructions">
+                <h1>Overview</h1>
+                <p>This lesson will examine persistent cross-site scripting, also known as XSS.</p>
+                <p>This lesson will teach learners:</p>
+                <ul>
+                    <li>The difference between persistent and non-persistent cross-site scripting</li>
+                    <li>How to identify code that is vulnerable to persistent cross-site scripting</li>
+                    <li>How to exploit code vulnerable to persistent cross-site scripting</li>
+                    <li>How to patch the innerHTML persistent cross-site scripting vulnerabilty</li> 
+                </ul>
+                <p>This lesson will explain the different types of XSS vulnerabilities, how they are exploited, and the impact that they have. It will guide the learner through exploiting a comment submission system on a public forum. Finally, it will instruct the learner on how to fix an XSS vulnerability.</p>
+                <p>The application is a simple forum for a TV show, which features a comment section where users can submit their thoughts on the show. The unsanitized inputs are saved and displayed for the user by editing the innerHTML property.</p>
+                <h1>Vulnerability</h1>
+                <p>
+XSS is a vulnerability found in web applications. Attackers inject code into pages, which can then execute a wide variety of dangerous actions. This often occurs when the attacker submits some information that is meant to be read as text, but it is instead interpreted as a form of data like HTML.
+                </p>
+                <p>
+Non-persistent, or reflected XSS, usually occurs through an HTTP request. It is often delivered via a URL in an email, tweet, or similar medium, and it comprimises the user who follows that URL.
+                </p>
+                <p>
+Persistent XSS (as seen in this example) is less common and more dangerous. The attacker stores their code in the page, and anyone who views the page then executes the code. Because there can be many more victims, and they do not need to make a mistake such as following a malicious URL, persistent XSS attacks can be devastating.
+                </p>
+                <h1>Exploit</h1>
+                <p>
+In the sandbox on the right, users can submit comments about a TV show. Try submitting a comment and see what happens.
+                </p>
+                <p>
+Next, try submitting the comment with some tags, like <code>&lt;h1&gt;comment&lt;/h1&gt;</code>. You should see your comment become a heading. This is likely unintended, so you're already exploiting a bug. However, you can do something much more damaging.
+                </p>
+                <p>
+If you've worked with HTML before, you might know where this is going. Try typing <code>&lt;script&gt;alert('XSS Exploit!')&lt;/script&gt;</code>. And... most likely, nothing will happen. This is because most browsers filter out <code>&lt;script&gt</code> tags used this way.
+                </p>
+                <p>
+There are a few ways to get around this, however. One of the most common goes something like: <code>&lt;img src="x" onerror="alert('XSS Exploit!')"&gt;</code>. The browser will try to load the image, but because <code>x</code> is an invalid source, it will run the <code>onerror</code> code. If you refresh, it will continue to display this alert each time.
+                </p>
+                <h1>Patch</h1>
+                <p>
+Select <b>Editor</b> in the top right. This is the HTML, CSS, and JavaScript that handles the sandbox website.
+                </p>
+                <p>
+Scroll down to the <code>addComments</code> function. This is where the vulnerability occurs. <code>div.innerHTML = comment</code> interprets the comment as HTML, not just plain text. To fix this, simply replace <code>innerHTML</code> with <code>textContent</code>.
+                </p>
+                <p>
+innerHTML is not the only way for an XSS vulnerability to occur, but it is one of the most common methods. Whenever using user-provided input, ensure that it is interpreted as plain text or properly sanitized to avoid cross-site scripting.
+                </p>
+            </div>
+        </div>
+        <div class="right">
+            <div class="testing-tabs">
+                <button class="testing-tab active" onclick="showTestingTab('sandbox')">Sandbox</button>
+                <button class="testing-tab" onclick="showTestingTab('editor')">Editor</button>
+            </div>
+            <div id="sandbox" class="testing-tab-content active">
+                <iframe id="preview" sandbox="allow-scripts allow-forms allow-modals"></iframe>
+            </div>
+            <div id="editor" class="testing-tab-content">
+                <div class="line-numbers" id="lineNumbers"></div>
+                <div id="codeLine" style="border-left: 1px solid gray;"></div>
+                <textarea id="editorArea" onscroll="syncScroll()" oninput="updateTextArea()"></textarea>
+                <button id="resetCodeBtn" onclick="resetCode()">Reset Code</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultSandboxCode =
+`<!DOCTYPE html>
+<html>
+<body>
+    <style>
+        #resetCommentsBtn {
+            position: absolute;
+            top: 160px;
+            right: 20px;
+            padding: 10px 16px;
+            background-color: #252533;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #comments > div {
+            margin-bottom: 15px;
+        }
+    </style>
+
+    <div class="sandbox-title">
+        <h1>TV Show Forum</h1>
+    </div>
+    <form id="commentForm">
+        <label>Leave a comment:</label><br>
+        <input type="text" id="commentInput">
+        <button type="submit">Submit</button>
+    </form>
+
+    <hr style="margin: 20px 0;">
+
+    <h2>Previous Comments:</h2>
+    <div id="comments"></div>
+    <button id="resetCommentsBtn" onclick="resetComments()">Reset Comments</button>
+    <script>
+        const form = document.getElementById("commentForm");
+        const input = document.getElementById("commentInput");
+        const commentsDiv = document.getElementById("comments");
+        const comments = [];
+
+        // We can't access localStorage from inside the sandbox, so instead, the parent
+        // window sends us the saved comments
+        window.addEventListener("message", (event) => {
+            try {
+                newComments = JSON.parse(event.data);
+                addComments(newComments);
+            } catch (e) {
+                console.warn("Invalid comment data:", event.data);
+            }
+        });
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            addComments([input.value]);
+            // Again, we can't access localStorage from inside the sandbox, so instead,
+            // we send the comments to the parent window
+            window.parent.postMessage(JSON.stringify(comments), "*");
+        });
+
+        function addComments(newComments) {
+            newComments.forEach(comment => {
+                comments.push(comment);
+                const div = document.createElement("div");
+                div.innerHTML = comment;
+                commentsDiv.appendChild(div);
+            });
+        }
+
+        function resetComments() {
+            window.parent.postMessage("[]", "*");
+            while (commentsDiv.firstChild) {
+                commentsDiv.removeChild(commentsDiv.firstChild);
+            }
+        }
+    <\/script>
+<\/body>
+<\/html>`
+        const commentKey = "comments"
+        const storageKey = "userCode";
+        const savedSandboxCode = localStorage.getItem(storageKey);
+        const editor = document.getElementById('editorArea');
+        const defaultMessages = "[\"I love this show!\", \"I thought the ending was bad.\"]";
+
+        editor.value = savedSandboxCode ?? defaultSandboxCode;
+        const iframe = document.getElementById('preview');
+        iframe.srcdoc = editor.value;
+
+        editor.addEventListener("input", () => {
+            localStorage.setItem(storageKey, editor.value);
+            const iframe = document.getElementById('preview');
+            iframe.srcdoc = editor.value;
+        });
+
+        const sandbox = document.getElementById("preview")
+        sandbox.addEventListener("load", () => {
+            sandbox.contentWindow.postMessage(
+                JSON.stringify(JSON.parse(localStorage.getItem(commentKey) || defaultMessages)),
+                "*"
+            );
+        });
+
+        function showTestingTab(tabId) {
+            document.querySelectorAll('.testing-tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.testing-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            autoResize(document.getElementById("editorArea"));
+        }
+
+        function resetCode() {
+            editor.value = defaultSandboxCode;
+            localStorage.removeItem(storageKey);
+            const iframe = document.getElementById('preview');
+            iframe.srcdoc = editor.value;
+        }
+
+        window.addEventListener("message", (event) => {
+            localStorage.setItem(commentKey, event.data);
+        });
+
+        function updateTextArea() {
+            const textarea = document.getElementById("editorArea");
+            updateLineNumbers(textarea);
+            autoResize(textarea);
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+            const lineNumbers = document.getElementById("lineNumbers");
+            lineNumbers.style.height = textarea.scrollHeight + 'px';
+            const codeLine = document.getElementById("codeLine");
+            codeLine.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function updateLineNumbers(textarea) {
+            const lines = textarea.value.split("\n").length;
+            const lineNumbers = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+            document.getElementById("lineNumbers").textContent = lineNumbers;
+        }
+
+        function syncScroll() {
+            const textarea = document.getElementById("editorArea");
+            const lineNumbers = document.getElementById("lineNumbers");
+            lineNumbers.scrollTop = textarea.scrollTop;
+        }
+
+        // Initialize
+        const editorArea = document.getElementById("editorArea");
+        updateLineNumbers(editorArea);
+    </script>
+</body>
+</html>
