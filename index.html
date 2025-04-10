@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Persistent XSS Example</title>
+    <title>Persistent XSS Lesson</title>
     <style>
         * {
             margin: 0;
@@ -145,6 +145,16 @@
             resize: none;
         }
 
+        .aligned-list {
+            padding-left: 1.2em;
+            margin-left: 0;
+            margin-bottom: 15px;
+        }
+
+        .aligned-list li {
+            margin-left: 0;
+        }
+
         iframe {
             width: 100%;
             height: 100vh;
@@ -182,7 +192,7 @@
                 <h1>Overview</h1>
                 <p>This lesson will examine persistent cross-site scripting, also known as XSS.</p>
                 <p>This lesson will teach learners:</p>
-                <ul>
+                <ul class="aligned-list">
                     <li>The difference between persistent and non-persistent cross-site scripting</li>
                     <li>How to identify code that is vulnerable to persistent cross-site scripting</li>
                     <li>How to exploit code vulnerable to persistent cross-site scripting</li>
