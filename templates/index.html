@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Insecure Deserialization Lesson</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            font-family: Arial, sans-serif;
+        }
+
+        .top-left {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 35px;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        
+        .left, .right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            font-size: 18px;
+        }
+
+        .left {
+            background-color: #f0f0f0;
+            border-right: 2px solid #ccc;
+            margin-top: 60px;
+        }
+
+        .right {
+            background-color: #dff0ff;
+        }
+
+        .testing-tabs {
+            display: flex;
+            width: 100%;
+            background-color: #c0e4ff;
+            justify-content: center;
+        }
+
+        .testing-tab {
+            flex: 1; /* 👈 This makes each tab fill equal space */
+            padding: 10px 0;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 30px;
+        }
+
+        .testing-tab.active {
+            background-color: #ffffff;
+            border-bottom: 2px solid white;
+        }
+
+        .testing-tab-content {
+            display: none;
+        }
+
+        #sandbox.testing-tab-content.active {
+            display: block;
+            padding: 20px;
+        }
+
+        #editor.testing-tab-content.active {
+            display: flex;
+            padding: 20px;
+            flex: 1;
+            height: 80vh;
+        }
+
+        #sandbox {
+            padding: 20px;
+        }
+
+        .sandbox-title {
+            padding-bottom: 20px;
+        }
+
+        #resetCodeBtn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 10px 16px;
+            background-color: white;
+            color: black;
+            font-size: 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .instructions {
+            font-size: 16px;
+            line-height: 1.4;
+            color: #222;
+            margin: 20px;
+        }
+
+        #editor {
+            font-family: monospace;
+        }
+
+        .line-numbers {
+            color: white;
+            background-color: #252533;
+            text-align: right;
+            width: 30px;
+            overflow: hidden;
+            font-family: inherit;
+            font-size: 12px;
+            line-height: 1.4;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-right: 10px;
+            font-size: 12px;
+            margin-bottom: 0px;
+            padding-bottom: 0px;
+            margin: 0px;
+            white-space: pre-wrap;
+        }
+
+        
+
+        .aligned-list {
+            padding-left: 1.2em;
+            margin-left: 0;
+            margin-bottom: 15px;
+        }
+
+        .aligned-list li {
+            margin-left: 0;
+        }
+
+        .CodeMirror {
+            height: 100%;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        #sandbox {
+            width: 100%;
+            height: 100vh;
+            border: 0px solid #ccc;
+            margin-top: 0px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        code {
+            background-color: #d0d0d0;
+            color: #c7254e;
+            padding: 3px;
+            font-size: 14px;
+        }
+
+        #resetCommentsBtn {
+            position: absolute;
+            top: 215px;
+            right: 20px;
+            padding: 10px 16px;
+            background-color: #252533;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #comment-container > div {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-left">Insecure Deserialization Lesson</div><hr style="
+    position: absolute;
+    top: 55px;
+    left: 0px;
+    width: 100%;
+    height: 5px;
+    background-color: black;
+    border: none;
+">
+    <div class="container">
+        <div class="left">
+            <div class="instructions">
+                <h1>Overview</h1>
+                <ul class="aligned-list">
+                    <li></li>
+                    <li></li>
+                <h1>Vulnerability</h1>
+                <h1>Exploit</h1>
+                <h1>Patch</h1>
+            </div>
+        </div>
+        <div class="right">
+            <div class="testing-tabs">
+                <button class="testing-tab active" onclick="showTestingTab('sandbox')">Sandbox</button>
+                <button class="testing-tab" onclick="showTestingTab('editor')">Editor</button>
+            </div>
+            <div id="sandbox" class="testing-tab-content active">
+                <div class="sandbox-title">
+                    <h1>TV Show Forum</h1>
+                </div>
+                <form id="commentForm">
+                    <label>Leave a comment:</label><br>
+                    <input type="text" id="commentText">
+                    <input type="text" id="commentUsername">
+                    <button type="submit">Submit</button>
+                </form>
+
+                <hr style="margin: 20px 0;">
+
+                <h2>Previous Comments:</h2>
+                <template id="comment-template">
+                    <div class="comment">
+                        <strong class="username"></strong>: <span class="text"></span>
+                    </div>
+                    </template>
+                <div id="comment-container"></div>
+                <button id="resetCommentsBtn" onclick="resetComments()">Reset Comments</button>
+            </div>
+            <div id="editor" class="testing-tab-content">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+
+                <textarea id="editorArea"></textarea>
+                <button id="resetCodeBtn" onclick="resetCode()">Reset Code</button>
+            </div>
+        </div>
+
+    <script>
+        fetch("/set-session-id", {
+            credentials: "include"  // 🔑 ensures the cookie is stored
+        })
+
+        const defaultCode =
+`import pickle
+import cookie_manager
+
+class Comment:
+    def __init__(self, text, username):
+        self.text = text
+        self.username = username
+
+# Save comments (serialize)
+def save_comments(comments):
+    cookie_saver.save_cookie("comments", pickle.dumps(comments,))
+
+# Load comments (deserialize)
+def load_comments():
+    cookie = cookie_saver.get_cookie("comments")
+    if cookie:
+        return pickle.load(cookie)
+    return []`
+
+        const userCodeKey = "user-code"
+        const editor = document.getElementById("editorArea");
+        const codeMirrorEditor = CodeMirror.fromTextArea(editor, {
+            mode: "python",
+            lineNumbers: true,
+            theme: "monokai" 
+        });
+        const defaultMessages = "[\"I love this show!\", \"I thought the ending was bad.\"]";
+
+        codeMirrorEditor.on("change", () => {
+            localStorage.setItem(userCodeKey, codeMirrorEditor.getValue());
+            updateUserCode(codeMirrorEditor.getValue());
+        });
+
+        function showTestingTab(tabId) {
+            document.querySelectorAll('.testing-tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.testing-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            if (tabId === "editor") {
+                setTimeout(() => codeMirrorEditor.refresh(), 0); // 👈 Force refresh after showing tab
+            }
+        }
+
+        function resetCode() {
+            localStorage.removeItem(userCodeKey);
+        }
+
+        function updateTextArea() {
+            const textarea = document.getElementById("editorArea");
+            updateLineNumbers(textarea);
+            autoResize(textarea);
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+            const lineNumbers = document.getElementById("lineNumbers");
+            lineNumbers.style.height = textarea.scrollHeight + 'px';
+            const codeLine = document.getElementById("codeLine");
+            codeLine.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function updateLineNumbers(textarea) {
+            const lines = textarea.value.split("\n").length;
+            const lineNumbers = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+            document.getElementById("lineNumbers").textContent = lineNumbers;
+        }
+
+        function syncScroll() {
+            const textarea = document.getElementById("editorArea");
+            const lineNumbers = document.getElementById("lineNumbers");
+            lineNumbers.scrollTop = textarea.scrollTop;
+        }
+
+        function setUserCode() {
+            let userCode = localStorage.getItem(userCodeKey);
+            if (userCode === null) {
+                userCode = defaultCode;
+            }
+            codeMirrorEditor.setValue(userCode);
+            updateUserCode(userCode);
+        }
+
+        function updateUserCode(userCode) {
+            fetch("/set-user-code", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ "user-code": userCode })
+            });
+        }
+
+        // Initialize
+        const editorArea = document.getElementById("editorArea");
+        //updateLineNumbers(editorArea);
+        setUserCode();
+        loadComments();
+
+        const form = document.getElementById("commentForm");
+        const textInput = document.getElementById("commentText");
+        const usernameInput = document.getElementById("commentUsername");
+        const commentsTemplate = document.getElementById("comment-template");
+        const commentsContainer = document.getElementById("comment-container");
+        let comments = [];
+
+        form.addEventListener("submit", function(e) {
+            e.preventDefault(); // prevent page reload
+
+            const text = textInput.value.trim();
+            let username = usernameInput.value.trim();
+            if (username == "") username = "Anonymous";
+
+            if (text !== "") {
+                addComment(username, text);
+                textInput.value = "";
+                usernameInput.value = "";
+            }
+        });
+
+        function addComment(username, text, save = true) {
+            const clone = commentsTemplate.content.cloneNode(true);
+
+            clone.querySelector(".username").textContent = username;
+            clone.querySelector(".text").textContent = text;
+
+            commentsContainer.appendChild(clone);
+            comments.push({ username: username, text: text });
+            if (save) saveComments();
+        }
+
+        function resetComments() {
+            comments = [];
+            while (commentsContainer.firstChild) {
+                commentsContainer.removeChild(commentsContainer.firstChild);
+            }
+            saveComments();
+        }
+
+        function saveComments() {
+            fetch("/save-comments", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(comments)
+            })
+        }
+
+        function loadComments() {
+            fetch("/load-comments", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(async res => {
+                let data;
+                try {
+                    data = await res.json();
+                } catch (jsonError) {
+                    console.error("Failed to parse JSON:", jsonError);
+                    return;
+                }
+                if (!res.ok) {
+                    console.error("Server error:", data.error || "Unknown error");
+                    return;
+                }
+                for (const comment of data) {
+                    addComment(comment["username"], comment["text"], false);
+                }
+            })
+            .catch(error => {
+                console.error("Network or fetch error:", error);
+            });
+        }
+    </script>
+</body>
+</html>
