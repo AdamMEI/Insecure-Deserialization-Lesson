@@ -6,6 +6,7 @@ import uuid
 import tempfile
 import json
 import base64
+import codecs
 
 COMMENTS_FILE = "comments.pkl"
 SEPARATOR = ";.,"
@@ -59,9 +60,10 @@ def load_comments(cookies, user_code):
     if "comments" not in cookies:
         cookies["comments"] = default_comments
 
-    print("COOKIES DICT COMMENTS:", repr(cookies["comments"]))
     cookieDict = "{"
     for key, value in cookies.items():
+        key = key.replace("\"", "\\\"")
+        value = value.replace("\"", "\\\"")
         cookieDict += f'"{key}":"{value}",'
     cookieDict = cookieDict[:-1] # trim last comma
     cookieDict += "}"
@@ -87,10 +89,8 @@ def load_comments(cookies, user_code):
             stdout=True,
         )
 
-        print(container.decode())
-
     # returns a json string of a list of dicts
-    return container.decode()
+    return codecs.decode(container.decode(), 'unicode_escape')
 
 def save_comments(response, user_code, comments):
     comments_str = "["

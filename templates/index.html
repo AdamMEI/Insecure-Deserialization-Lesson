@@ -6,29 +6,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
     <style>
+        /* Global Reset & Typography */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        body, html {
+        html, body {
             font-family: Arial, sans-serif;
         }
 
-        .top-left {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 35px;
-        }
-
+        /* Layout Containers */
         .container {
             display: flex;
             min-height: 100vh;
         }
 
-        
         .left, .right {
             flex: 1;
             display: flex;
@@ -36,26 +30,45 @@
             font-size: 18px;
         }
 
+        /* Sidebar (Left Panel) */
         .left {
-            background-color: #f0f0f0;
+            background: #f0f0f0;
             border-right: 2px solid #ccc;
             margin-top: 60px;
         }
 
+        .instructions {
+            font-size: 16px;
+            line-height: 1.4;
+            color: #222;
+            margin: 20px;
+        }
+
+        .aligned-list {
+            padding-left: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .aligned-list li {
+            margin-left: 0;
+        }
+
+        /* Main Panel (Right) */
         .right {
-            background-color: #dff0ff;
+            background: #dff0ff;
             min-width: 0;
             overflow: hidden;
         }
 
-        .testing-tabs {
+        /* Tabs */
+        .tabs {
             display: flex;
             width: 100%;
-            background-color: #c0e4ff;
+            background: #c0e4ff;
             justify-content: center;
         }
 
-        .testing-tab {
+        .tab {
             flex: 1;
             padding: 10px 0;
             text-align: center;
@@ -65,28 +78,26 @@
             font-size: 30px;
         }
 
-        .testing-tab.active {
-            background-color: #ffffff;
+        .tab.active {
+            background: #fff;
             border-bottom: 2px solid white;
         }
 
-        .testing-tab-content {
+        .tab-content {
             display: none;
         }
 
-        #sandbox.testing-tab-content.active {
+        /* Sandbox Section */
+        #sandbox.tab-content.active {
             display: block;
             padding: 20px;
         }
 
-        #editor.testing-tab-content.active {
-            display: flex;
-            padding: 20px;
-            flex: 1;
-            height: 80vh;
-        }
-
         #sandbox {
+            width: 100%;
+            height: 100vh;
+            border: 0;
+            margin-top: 0;
             padding: 20px;
         }
 
@@ -94,6 +105,35 @@
             padding-bottom: 20px;
         }
 
+        /* Editor Section */
+        #editor.tab-content.active {
+            display: flex;
+            flex: 1;
+            height: 80vh;
+            padding: 20px;
+        }
+
+        #editorArea {
+            width: 100%;
+            height: 100%;
+            font-size: 14px;
+        }
+
+        .CodeMirror {
+            height: auto;
+            padding-bottom: 0;
+            user-select: text;
+        }
+
+        .CodeMirror-lines {
+            padding-bottom: 0 !important;
+        }
+
+        .code-block + .CodeMirror {
+            margin-bottom: 15px;
+        }
+
+        /* Comments */
         #commentForm {
             display: flex;
             flex-direction: column;
@@ -121,95 +161,57 @@
             font-size: 16px;
         }
 
-        #commentForm button {
+        #commentForm button,
+        #resetCodeBtn,
+        #resetCommentsBtn {
             padding: 10px 16px;
             font-size: 16px;
             cursor: pointer;
-        }
-
-        #resetCodeBtn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            padding: 10px 16px;
-            background-color: white;
-            color: black;
-            font-size: 18px;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
+            background: #252533;
+            color: white;
         }
 
-        .instructions {
-            font-size: 16px;
-            line-height: 1.4;
-            color: #222;
-            margin: 20px;
-        }
-
-        .aligned-list {
-            padding-left: 1.2em;
-            margin-left: 0;
-            margin-bottom: 15px;
-        }
-
-        .aligned-list li {
-            margin-left: 0;
-        }
-
-        #editorArea {
-            height: 100%;
-            width: 100%;
-            font-size: 14px;
-        }
-
-        #sandbox {
-            width: 100%;
-            height: 100vh;
-            border: 0px solid #ccc;
-            margin-top: 0px;
-        }
-
-        p {
-            margin-bottom: 15px;
-        }
-
-        code {
-            background-color: #d0d0d0;
-            color: #c7254e;
-            padding: 3px;
-            font-size: 14px;
+        /* Reset Buttons */
+        #resetCodeBtn {
+            position: fixed;
+            bottom: 15px;
+            right: 38px;
+            background: white;
+            color: black;
         }
 
         #resetCommentsBtn {
             position: absolute;
             top: 325px;
             right: 20px;
-            padding: 10px 16px;
-            background-color: #252533;
-            color: white;
-            font-size: 18px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
         }
 
         #comment-container > div {
             margin-bottom: 15px;
         }
 
-        .CodeMirror-lines {
-            padding-bottom: 0 !important;
+        /* Top Bar */
+        .top-left {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 35px;
         }
 
-        .CodeMirror {
-            height: auto;
-            padding-bottom: 0;
-        }
-
-        #code-block-1 + .CodeMirror {
+        /* Typography Elements */
+        p {
             margin-bottom: 15px;
         }
+
+        code {
+            background: #505050;
+            color: #e0e0e0;
+            padding: 3px;
+            font-size: 14px;
+        }
+
     </style>
 </head>
 <body>
@@ -228,60 +230,84 @@
         <div class="left">
             <div class="instructions">
                 <h1>Overview</h1>
-
+                <p>This lesson will examine insecure deserialization.</p>
+                <p>This lesson will teach learners:</p>
                 <ul class="aligned-list">
-                    <li></li>
-                    <li></li>
+                    <li>Serialization, insecure deserialization, and the security risks it poses</li>
+                    <li>How to identify, exploit, and patch insecure deserialization</li>
+                    <li>How to serialize JSON data</li>
                 </ul>
+                <p>Learners will submit comments on a forum, then edit serialized comment data to introduce their own malicious objects. The lesson will explain how serialization works, how insecure deserialization occurs, how to exploit it, and how to mitigate it.</p>
+                <p>The application features a website with an HTML frontend and a backend made using Flask. Comments will be serialized using <code>pickle</code> and then stored in a cookie. When the page is reloaded, they are deserialized and loaded onto the page.</p>
                 <h1>Vulnerability</h1>
                 <p><i>Serialization</i> is the process of converting data (often an object) to a format that is easier to store or transfer. It often means turning something into a string of bytes or text, then saving that to a file or sending it over a network. When the data is needed again, it is <i>deserialized</i> back into its original state.</p>
-                <p>This can be dangerous, however. If the user has control over what information is deserialized, then they can alter the information to instead contain their own serialized object. When that object is deserialized, it can perform arbitrary code (such as <code>os.system("rm -rf")</code>.
+                <p>This can be dangerous, however. If the user has control over what information is deserialized, they can alter the information to contain their own serialized object instead. When that object is deserialized, it can perform arbitrary code (such as <code>os.system("rm -rf")</code>).</p>
                 <h1>Exploit</h1>
                 <p>When looking for potential exploits, it's important to check cookies and local storage to see if they contain any useful information.</p>
                 <p>To check cookies, press Ctrl + Shift + I on Windows/Linux or Cmd + Option + I on Mac. Navigate to Storage on Firefox or Application on other browsers. Finally, click on the web address under Cookies.</p>
-                <p>Try leaving a comment. A new entry should pop up with the name <code>comments</code>. The value consists of seemingly random lower and uppercase letters, implying that it may be base 64 encoded. This implies that the comments may be stored as base 64 encoded data in the cookies, then loaded when you reload the page. To confirm this, try reloading the page, and see if your comment stays. If it does, then try deleting that cookie entry and reloading it again. The new comment should go away.</p>
-                <p>Now that you know the cookie entry stores comments, it's time to build a payload. The simplest way to do this is using python. Run the following code, either on your computer or on <a href="https://www.pythonsandbox.com/" target="_blank" rel="noopener noreferrer">this python sandbox</a>:</p>
-                <textarea id="code-block-1">
+                <p>Try leaving a comment in the sandbox. A new cookie should pop up with the name <code>comments</code>. The value consists of seemingly random characters, most of which are letters, implying that it may be base 64 encoded. Test this by copying the information and pasting it into <a href="https://www.base64decode.org/"> this base 64 decoder</a>. You should see legible words, including some comment information, suggesting that the comments are stored as base 64 encoded data in the cookies and loaded when you reload the page. To confirm this, try reloading the page, and see if your comment stays. If it does, then try deleting that cookie entry and reloading again. The new comment should go away.</p>
+                <p>Now that you know the cookie entry stores comments, it's time to build a payload. The type of payload necessary depends on the backend language. A real attacker would generally attempt to find the backend language before proceeding, but that is outside the scope of this lesson. The backend uses Python. One of the most common serialization libraries in Python is <code>pickle</code>, so that's what we will use to construct our payload. Run the following code, either on your computer or on <a href="https://www.pythonsandbox.com/" target="_blank" rel="noopener noreferrer">this python sandbox</a>:</p>
+                <textarea class="code-block">
 import pickle
 import os
 import base64
 
 class Exploit:
     def __reduce__(self):
-        return (os.system, ("ls app",)) 
+        return (print, ("You have been hacked!",)) 
 
 # Serialize the object
 payload = pickle.dumps(Exploit())
 
 # Print the object as a base 64 encoded string
 print(base64.b64encode(payload).decode("utf-8"))</textarea>
-                <p>This will print out a pickled, base-64 encoded object of your Exploit class. Assuming that we are right and the backend service uses pickles to deserialize the comments, this should print out the message.</p>
-                <p>Copy the payload, then go to your cookies and replace the current value for <code>comments</code> with the payload. Reload the page and check the console to see if there are any error messages (Ctrl + Shift + J on Windows/Linux or Cmd + Option + J on Mac). You should see an error that includes your message (<code>You have been hacked!</code>).</p>
+                <p>This will print out a pickled, base-64 encoded object of your Exploit class. If our assumption is correct and the backend service uses <code>pickle</code> to deserialize the comments, this should print out the message.</p>
+                <p>Copy the payload, then go to your cookies and replace the current value for <code>comments</code> with the payload. Reload the page and check the console to see if any output appears (Ctrl + Shift + J on Windows/Linux or Cmd + Option + J on Mac). You should see a warning that includes your message (<code>You have been hacked!</code>).</p>
                 <p>In a real exploit, you could run more dangerous commands, like the aforementioned <code>os.system("rm -rf")</code>. Because this is a lesson, the object is deserialized in a docker container, so this would not accomplish much.
                 <h1>Patch</h1>
-                <p>The vulnerability stems from the inherit danger in deserializing user-controlled information. To patch it, we have two options:
+                <p>The vulnerability stems from the inherent danger in deserializing user-controlled information. To patch it, we have two options:
                     <ul class="aligned-list">
                         <li>Don't store the serialized comments in a place where users can alter them</li>
                         <li>Don't serialize and deserialize them as potentially dangerous objects</li>
                     </ul>
-                    For this lesson, we will choose the second option. Instead of serializing the comments as objects using pickles, we will serialize them as a JSON list.
+                    For this lesson, we will choose the second option. Instead of serializing the comments as objects using <code>pickle</code>, we will serialize them as a JSON list. JSON cannot encode arbitrary objects, which is what makes <code>pickle</code> dangerous.
                 </p>
                 <p>Click on the Editor tab in the top right. To save the comments as JSON, we will need to convert them to dictionaries first. Add this code to the <code>Comment</code> class:</p>
-                <textarea id="code-block-2">
+                <textarea class="code-block">
     def to_dict(self):
         return {"text": self.text, "username": self.username}
     @staticmethod
     def from_dict(data):
-        return Comment(data["text"], data["username"])
-                </textarea>
+        return Comment(data["text"], data["username"])</textarea>
+                <p>Next, replace the <code>save_comments</code> method with this:</p>
+                <textarea class="code-block">
+def save_comments(comments):
+    # converts list of Comment objects to a list of dicts
+    comment_dicts = [comment.to_dict() for comment in comments]
+    json_string = json.dumps(comment_dicts)
+    cookie_manager.save_cookie("comments", json_string)</textarea>
+                <p>Finally, replace the <code>load_comments</code> method with this:</p>
+                <textarea class="code-block">
+def load_comments():
+    cookie = cookie_manager.get_cookie("comments")
+    if cookie:
+        try:
+            comment_dicts = json.loads(cookie)
+            # converts list of dicts to a list of Comments
+            return [Comment.from_dict(d) for d in comment_dicts]
+        except json.JSONDecodeError:
+            return []
+    return []</textarea>
+                <p>The website is now secure from deserialization attacks using the comments stored in cookies. To ensure that the program still works, add another comment and reload the page.</p>
             </div>
         </div>
         <div class="right">
-            <div class="testing-tabs">
-                <button class="testing-tab active" onclick="showTestingTab('sandbox')">Sandbox</button>
-                <button class="testing-tab" onclick="showTestingTab('editor')">Editor</button>
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('sandbox')">Sandbox</button>
+                <button class="tab" onclick="showTab('editor')">Editor</button>
             </div>
-            <div id="sandbox" class="testing-tab-content active">
+
+            <div id="sandbox" class="tab-content active">
                 <div class="sandbox-title">
                     <h1>TV Show Forum</h1>
                 </div>
@@ -292,10 +318,8 @@ print(base64.b64encode(payload).decode("utf-8"))</textarea>
                         <button type="submit">Submit</button>
                     </div>
                 </form>
-
                 <hr style="margin: 20px 0;">
-
-                <h2>Previous Comments:</h2>
+                <h2 style="margin-bottom: 10px">Previous Comments:</h2>
                 <template id="comment-template">
                     <div class="comment">
                         <strong class="username"></strong>: <span class="text"></span>
@@ -304,8 +328,8 @@ print(base64.b64encode(payload).decode("utf-8"))</textarea>
                 <div id="comment-container"></div>
                 <button id="resetCommentsBtn" onclick="resetComments()">Reset Comments</button>
             </div>
-            <div id="editor" class="testing-tab-content">
 
+            <div id="editor" class="tab-content">
                 <textarea id="editorArea"></textarea>
                 <button id="resetCodeBtn" onclick="resetCode()">Reset Code</button>
             </div>
@@ -316,29 +340,7 @@ print(base64.b64encode(payload).decode("utf-8"))</textarea>
             credentials: "include"  // 🔑 ensures the cookie is stored
         })
 
-        const defaultCode =
-`import pickle
-import cookie_manager
-import base64
-
-class Comment:
-    def __init__(self, text, username):
-        self.text = text
-        self.username = username
-
-# Save comments (serialize)
-def save_comments(comments):
-    encoded_comments = base64.b64encode(pickle.dumps(comments)).decode("utf-8")
-    cookie_manager.save_cookie("comments", encoded_comments)
-
-# Load comments (deserialize)
-def load_comments():
-    cookie = cookie_manager.get_cookie("comments")
-    decoded_cookie = base64.b64decode(cookie)
-    if decoded_cookie:
-        return pickle.loads(decoded_cookie)
-    return []`
-
+        let defaultCode = "";
         const userCodeKey = "user-code"
         const editor = document.getElementById("editorArea");
         const codeMirrorEditor = CodeMirror.fromTextArea(editor, {
@@ -346,24 +348,23 @@ def load_comments():
             lineNumbers: true,
             theme: "monokai" 
         });
-        CodeMirror.fromTextArea(document.getElementById("code-block-1"), {
-            mode: "python",
-            theme: "monokai",
-            lineNumbers: true,
-            readOnly: "nocursor",
-        });
         const defaultMessages = "[\"I love this show!\", \"I thought the ending was bad.\"]";
+        const editorArea = document.getElementById("editorArea");
 
         codeMirrorEditor.on("change", () => {
             if (codeMirrorEditor.getValue() != defaultCode) {
                 localStorage.setItem(userCodeKey, codeMirrorEditor.getValue());
             }
+            else {
+                localStorage.removeItem(userCodeKey);
+            }
             updateUserCode(codeMirrorEditor.getValue());
+            //resizeCodeMirrorToContent();
         });
 
-        function showTestingTab(tabId) {
-            document.querySelectorAll('.testing-tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.testing-tab').forEach(el => el.classList.remove('active'));
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
             if (tabId === "editor") {
@@ -375,33 +376,6 @@ def load_comments():
             localStorage.removeItem(userCodeKey);
             codeMirrorEditor.setValue(defaultCode);
             updateUserCode(defaultCode);
-        }
-
-        function updateTextArea() {
-            const textarea = document.getElementById("editorArea");
-            updateLineNumbers(textarea);
-            autoResize(textarea);
-        }
-
-        function autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-            const lineNumbers = document.getElementById("lineNumbers");
-            lineNumbers.style.height = textarea.scrollHeight + 'px';
-            const codeLine = document.getElementById("codeLine");
-            codeLine.style.height = textarea.scrollHeight + 'px';
-        }
-
-        function updateLineNumbers(textarea) {
-            const lines = textarea.value.split("\n").length;
-            const lineNumbers = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
-            document.getElementById("lineNumbers").textContent = lineNumbers;
-        }
-
-        function syncScroll() {
-            const textarea = document.getElementById("editorArea");
-            const lineNumbers = document.getElementById("lineNumbers");
-            lineNumbers.scrollTop = textarea.scrollTop;
         }
 
         function setUserCode() {
@@ -423,11 +397,41 @@ def load_comments():
             });
         }
 
-        // Initialize
-        const editorArea = document.getElementById("editorArea");
-        //updateLineNumbers(editorArea);
-        setUserCode();
-        loadComments();
+        function initializeCodeBlocks() {
+            document.querySelectorAll('.code-block').forEach(el => 
+                CodeMirror.fromTextArea(el, {
+                    mode: "python",
+                    theme: "monokai",
+                    lineNumbers: true,
+                    readOnly: true,
+                })
+            );
+        }
+
+        function fetchDefaultCode() {
+            fetch("/static/default_user_code.py")
+                .then(res => res.text())
+                .then(code => {
+                    defaultCode = code;
+                    setUserCode();
+                    loadComments();
+                });
+        }
+
+        function resizeCodeMirrorToContent() {
+            const lineCount = codeMirrorEditor.lineCount();
+            const lineHeight = 21;
+            const newHeight = lineCount * lineHeight + 10; // 10px padding
+            codeMirrorEditor.setSize(null, `${newHeight}px`);
+            const { width, height } = codeMirrorEditor.getWrapperElement().getBoundingClientRect();
+            console.log(height);
+            console.log(newHeight);
+            console.log(getComputedStyle(codeMirrorEditor.getWrapperElement()));
+        }
+
+        fetchDefaultCode();
+        initializeCodeBlocks();
+        //resizeCodeMirrorToContent();
 
         const form = document.getElementById("commentForm");
         const textInput = document.getElementById("commentText");

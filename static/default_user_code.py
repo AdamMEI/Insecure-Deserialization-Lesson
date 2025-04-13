@@ -15,7 +15,8 @@ def save_comments(comments):
 # Load comments (deserialize)
 def load_comments():
     cookie = cookie_manager.get_cookie("comments")
-    decoded_cookie = base64.b64decode(cookie)
-    if decoded_cookie:
-        return pickle.loads(decoded_cookie)
+    if cookie:
+        decoded_cookie = base64.b64decode(cookie)
+        if decoded_cookie:
+            return pickle.loads(decoded_cookie)
     return []

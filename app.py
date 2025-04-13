@@ -37,10 +37,10 @@ def save_comments():
     if not session_id:
         return {"error": "no session"}, 403
     if session_id not in user_code:
+        print("t")
         return {"error": "haven't set user_code"}, 400
     comments = request.get_json()
-    print(comments)
-    if not comments:
+    if comments == None:
         return {"error": "no comments"}, 400
     response = make_response("Saved comments")
     docker_management.save_comments(response, user_code[session_id], comments)
