@@ -44,6 +44,8 @@
 
         .right {
             background-color: #dff0ff;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .testing-tabs {
@@ -54,7 +56,7 @@
         }
 
         .testing-tab {
-            flex: 1; /* 👈 This makes each tab fill equal space */
+            flex: 1;
             padding: 10px 0;
             text-align: center;
             cursor: pointer;
@@ -92,6 +94,39 @@
             padding-bottom: 20px;
         }
 
+        #commentForm {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        #commentText {
+            width: 100%;
+            resize: vertical;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .form-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        #commentUsername {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #commentForm button {
+            padding: 10px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
         #resetCodeBtn {
             position: fixed;
             bottom: 30px;
@@ -112,31 +147,6 @@
             margin: 20px;
         }
 
-        #editor {
-            font-family: monospace;
-        }
-
-        .line-numbers {
-            color: white;
-            background-color: #252533;
-            text-align: right;
-            width: 30px;
-            overflow: hidden;
-            font-family: inherit;
-            font-size: 12px;
-            line-height: 1.4;
-            padding-top: 5px;
-            padding-bottom: 5px;
-            padding-right: 10px;
-            font-size: 12px;
-            margin-bottom: 0px;
-            padding-bottom: 0px;
-            margin: 0px;
-            white-space: pre-wrap;
-        }
-
-        
-
         .aligned-list {
             padding-left: 1.2em;
             margin-left: 0;
@@ -147,7 +157,7 @@
             margin-left: 0;
         }
 
-        .CodeMirror {
+        #editorArea {
             height: 100%;
             width: 100%;
             font-size: 14px;
@@ -173,7 +183,7 @@
 
         #resetCommentsBtn {
             position: absolute;
-            top: 215px;
+            top: 325px;
             right: 20px;
             padding: 10px 16px;
             background-color: #252533;
@@ -183,7 +193,21 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
         #comment-container > div {
+            margin-bottom: 15px;
+        }
+
+        .CodeMirror-lines {
+            padding-bottom: 0 !important;
+        }
+
+        .CodeMirror {
+            height: auto;
+            padding-bottom: 0;
+        }
+
+        #code-block-1 + .CodeMirror {
             margin-bottom: 15px;
         }
     </style>
@@ -198,16 +222,58 @@
     background-color: black;
     border: none;
 ">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
     <div class="container">
         <div class="left">
             <div class="instructions">
                 <h1>Overview</h1>
+
                 <ul class="aligned-list">
                     <li></li>
                     <li></li>
+                </ul>
                 <h1>Vulnerability</h1>
+                <p><i>Serialization</i> is the process of converting data (often an object) to a format that is easier to store or transfer. It often means turning something into a string of bytes or text, then saving that to a file or sending it over a network. When the data is needed again, it is <i>deserialized</i> back into its original state.</p>
+                <p>This can be dangerous, however. If the user has control over what information is deserialized, then they can alter the information to instead contain their own serialized object. When that object is deserialized, it can perform arbitrary code (such as <code>os.system("rm -rf")</code>.
                 <h1>Exploit</h1>
+                <p>When looking for potential exploits, it's important to check cookies and local storage to see if they contain any useful information.</p>
+                <p>To check cookies, press Ctrl + Shift + I on Windows/Linux or Cmd + Option + I on Mac. Navigate to Storage on Firefox or Application on other browsers. Finally, click on the web address under Cookies.</p>
+                <p>Try leaving a comment. A new entry should pop up with the name <code>comments</code>. The value consists of seemingly random lower and uppercase letters, implying that it may be base 64 encoded. This implies that the comments may be stored as base 64 encoded data in the cookies, then loaded when you reload the page. To confirm this, try reloading the page, and see if your comment stays. If it does, then try deleting that cookie entry and reloading it again. The new comment should go away.</p>
+                <p>Now that you know the cookie entry stores comments, it's time to build a payload. The simplest way to do this is using python. Run the following code, either on your computer or on <a href="https://www.pythonsandbox.com/" target="_blank" rel="noopener noreferrer">this python sandbox</a>:</p>
+                <textarea id="code-block-1">
+import pickle
+import os
+import base64
+
+class Exploit:
+    def __reduce__(self):
+        return (os.system, ("ls app",)) 
+
+# Serialize the object
+payload = pickle.dumps(Exploit())
+
+# Print the object as a base 64 encoded string
+print(base64.b64encode(payload).decode("utf-8"))</textarea>
+                <p>This will print out a pickled, base-64 encoded object of your Exploit class. Assuming that we are right and the backend service uses pickles to deserialize the comments, this should print out the message.</p>
+                <p>Copy the payload, then go to your cookies and replace the current value for <code>comments</code> with the payload. Reload the page and check the console to see if there are any error messages (Ctrl + Shift + J on Windows/Linux or Cmd + Option + J on Mac). You should see an error that includes your message (<code>You have been hacked!</code>).</p>
+                <p>In a real exploit, you could run more dangerous commands, like the aforementioned <code>os.system("rm -rf")</code>. Because this is a lesson, the object is deserialized in a docker container, so this would not accomplish much.
                 <h1>Patch</h1>
+                <p>The vulnerability stems from the inherit danger in deserializing user-controlled information. To patch it, we have two options:
+                    <ul class="aligned-list">
+                        <li>Don't store the serialized comments in a place where users can alter them</li>
+                        <li>Don't serialize and deserialize them as potentially dangerous objects</li>
+                    </ul>
+                    For this lesson, we will choose the second option. Instead of serializing the comments as objects using pickles, we will serialize them as a JSON list.
+                </p>
+                <p>Click on the Editor tab in the top right. To save the comments as JSON, we will need to convert them to dictionaries first. Add this code to the <code>Comment</code> class:</p>
+                <textarea id="code-block-2">
+    def to_dict(self):
+        return {"text": self.text, "username": self.username}
+    @staticmethod
+    def from_dict(data):
+        return Comment(data["text"], data["username"])
+                </textarea>
             </div>
         </div>
         <div class="right">
@@ -220,10 +286,11 @@
                     <h1>TV Show Forum</h1>
                 </div>
                 <form id="commentForm">
-                    <label>Leave a comment:</label><br>
-                    <input type="text" id="commentText">
-                    <input type="text" id="commentUsername">
-                    <button type="submit">Submit</button>
+                    <textarea id="commentText" placeholder="Comment" rows="4"></textarea>
+                    <div class="form-bottom-row">
+                        <input type="text" id="commentUsername" placeholder="Username">
+                        <button type="submit">Submit</button>
+                    </div>
                 </form>
 
                 <hr style="margin: 20px 0;">
@@ -238,8 +305,6 @@
                 <button id="resetCommentsBtn" onclick="resetComments()">Reset Comments</button>
             </div>
             <div id="editor" class="testing-tab-content">
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
 
                 <textarea id="editorArea"></textarea>
                 <button id="resetCodeBtn" onclick="resetCode()">Reset Code</button>
@@ -254,6 +319,7 @@
         const defaultCode =
 `import pickle
 import cookie_manager
+import base64
 
 class Comment:
     def __init__(self, text, username):
@@ -262,13 +328,15 @@ class Comment:
 
 # Save comments (serialize)
 def save_comments(comments):
-    cookie_saver.save_cookie("comments", pickle.dumps(comments,))
+    encoded_comments = base64.b64encode(pickle.dumps(comments)).decode("utf-8")
+    cookie_manager.save_cookie("comments", encoded_comments)
 
 # Load comments (deserialize)
 def load_comments():
-    cookie = cookie_saver.get_cookie("comments")
-    if cookie:
-        return pickle.load(cookie)
+    cookie = cookie_manager.get_cookie("comments")
+    decoded_cookie = base64.b64decode(cookie)
+    if decoded_cookie:
+        return pickle.loads(decoded_cookie)
     return []`
 
         const userCodeKey = "user-code"
@@ -278,10 +346,18 @@ def load_comments():
             lineNumbers: true,
             theme: "monokai" 
         });
+        CodeMirror.fromTextArea(document.getElementById("code-block-1"), {
+            mode: "python",
+            theme: "monokai",
+            lineNumbers: true,
+            readOnly: "nocursor",
+        });
         const defaultMessages = "[\"I love this show!\", \"I thought the ending was bad.\"]";
 
         codeMirrorEditor.on("change", () => {
-            localStorage.setItem(userCodeKey, codeMirrorEditor.getValue());
+            if (codeMirrorEditor.getValue() != defaultCode) {
+                localStorage.setItem(userCodeKey, codeMirrorEditor.getValue());
+            }
             updateUserCode(codeMirrorEditor.getValue());
         });
 
@@ -297,6 +373,8 @@ def load_comments():
 
         function resetCode() {
             localStorage.removeItem(userCodeKey);
+            codeMirrorEditor.setValue(defaultCode);
+            updateUserCode(defaultCode);
         }
 
         function updateTextArea() {
