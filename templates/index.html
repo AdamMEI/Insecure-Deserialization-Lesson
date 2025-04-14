@@ -113,7 +113,7 @@
             padding: 20px;
         }
 
-        #editorArea {
+        #editor-area {
             width: 100%;
             height: 100%;
             font-size: 14px;
@@ -134,14 +134,14 @@
         }
 
         /* Comments */
-        #commentForm {
+        #comment-form {
             display: flex;
             flex-direction: column;
             gap: 10px;
             width: 100%;
         }
 
-        #commentText {
+        #comment-text {
             width: 100%;
             resize: vertical;
             padding: 10px;
@@ -155,15 +155,15 @@
             gap: 10px;
         }
 
-        #commentUsername {
+        #comment-username {
             flex: 1;
             padding: 10px;
             font-size: 16px;
         }
 
-        #commentForm button,
-        #resetCodeBtn,
-        #resetCommentsBtn {
+        #comment-form button,
+        #reset-code-btn,
+        #reset-comments-btn {
             padding: 10px 16px;
             font-size: 16px;
             cursor: pointer;
@@ -174,7 +174,7 @@
         }
 
         /* Reset Buttons */
-        #resetCodeBtn {
+        #reset-code-btn {
             position: fixed;
             bottom: 15px;
             right: 38px;
@@ -182,7 +182,7 @@
             color: black;
         }
 
-        #resetCommentsBtn {
+        #reset-comments-btn {
             position: absolute;
             top: 325px;
             right: 20px;
@@ -231,13 +231,13 @@
             <div class="instructions">
                 <h1>Overview</h1>
                 <p>This lesson will examine insecure deserialization.</p>
-                <p>This lesson will teach learners:</p>
+                <p>Learns will explore:</p>
                 <ul class="aligned-list">
-                    <li>Serialization, insecure deserialization, and the security risks it poses</li>
-                    <li>How to identify, exploit, and patch insecure deserialization</li>
-                    <li>How to serialize JSON data</li>
+                    <li>What serialization and insecure deserialization are, and the risks involved</li>
+                    <li>How to identify and exploit insecure deserialization</li>
+                    <li>How to mitigate insecure deserialization by switching to JSON serialization/li>
                 </ul>
-                <p>Learners will submit comments on a forum, then edit serialized comment data to introduce their own malicious objects. The lesson will explain how serialization works, how insecure deserialization occurs, how to exploit it, and how to mitigate it.</p>
+                <p>Learners will submit comments on a forum, then edit serialized comment data to introduce their own malicious objects. They will then patch the vulnerability by serializing and deserializing the comment data using JSON instead of <code>pickle</code>.</p>
                 <p>The application features a website with an HTML frontend and a backend made using Flask. Comments will be serialized using <code>pickle</code> and then stored in a cookie. When the page is reloaded, they are deserialized and loaded onto the page.</p>
                 <h1>Vulnerability</h1>
                 <p><i>Serialization</i> is the process of converting data (often an object) to a format that is easier to store or transfer. It often means turning something into a string of bytes or text, then saving that to a file or sending it over a network. When the data is needed again, it is <i>deserialized</i> back into its original state.</p>
@@ -245,11 +245,10 @@
                 <h1>Exploit</h1>
                 <p>When looking for potential exploits, it's important to check cookies and local storage to see if they contain any useful information.</p>
                 <p>To check cookies, press Ctrl + Shift + I on Windows/Linux or Cmd + Option + I on Mac. Navigate to Storage on Firefox or Application on other browsers. Finally, click on the web address under Cookies.</p>
-                <p>Try leaving a comment in the sandbox. A new cookie should pop up with the name <code>comments</code>. The value consists of seemingly random characters, most of which are letters, implying that it may be base 64 encoded. Test this by copying the information and pasting it into <a href="https://www.base64decode.org/"> this base 64 decoder</a>. You should see legible words, including some comment information, suggesting that the comments are stored as base 64 encoded data in the cookies and loaded when you reload the page. To confirm this, try reloading the page, and see if your comment stays. If it does, then try deleting that cookie entry and reloading again. The new comment should go away.</p>
-                <p>Now that you know the cookie entry stores comments, it's time to build a payload. The type of payload necessary depends on the backend language. A real attacker would generally attempt to find the backend language before proceeding, but that is outside the scope of this lesson. The backend uses Python. One of the most common serialization libraries in Python is <code>pickle</code>, so that's what we will use to construct our payload. Run the following code, either on your computer or on <a href="https://www.pythonsandbox.com/" target="_blank" rel="noopener noreferrer">this python sandbox</a>:</p>
-                <textarea class="code-block">
+                <p>Try leaving a comment in the sandbox. A new cookie should pop up with the name <code>comments</code>. The value consists of seemingly random characters-mostly letters-implying that it may be base 64 encoded. Test this by copying the information and pasting it into <a href="https://www.base64decode.org/" target="_blank" rel="noopener noreferrer"> this base 64 decoder</a>. You should see legible words, including some comment information, suggesting that the comments are stored as base 64 encoded data in the cookies and loaded when you reload the page. To confirm this, try reloading the page, and see if your comment stays. If it does, then try deleting that cookie entry and reloading again. The new comment should go away.</p>
+                <p>Now that you know the cookie entry stores comments, it's time to build a payload. Since the backend uses Python, and one of the most common serialization libraries in Python is <code>pickle</code>, we’ll construct our payload using it. In a real-world attack, an attacker would first try to identify the backend language before crafting an exploit, but we’ll assume that step is already done here. Run the following code, either on your computer or on <a href="https://www.boot.dev/playground/py" target="_blank" rel="noopener noreferrer">this python sandbox</a>:</p>
+                <textarea id="code-block-1" class="code-block">
 import pickle
-import os
 import base64
 
 class Exploit:
@@ -263,31 +262,31 @@ payload = pickle.dumps(Exploit())
 print(base64.b64encode(payload).decode("utf-8"))</textarea>
                 <p>This will print out a pickled, base-64 encoded object of your Exploit class. If our assumption is correct and the backend service uses <code>pickle</code> to deserialize the comments, this should print out the message.</p>
                 <p>Copy the payload, then go to your cookies and replace the current value for <code>comments</code> with the payload. Reload the page and check the console to see if any output appears (Ctrl + Shift + J on Windows/Linux or Cmd + Option + J on Mac). You should see a warning that includes your message (<code>You have been hacked!</code>).</p>
-                <p>In a real exploit, you could run more dangerous commands, like the aforementioned <code>os.system("rm -rf")</code>. Because this is a lesson, the object is deserialized in a docker container, so this would not accomplish much.
+                <p>In a real exploit, you could run more dangerous commands, like the aforementioned <code>os.system("rm -rf")</code>. Because this is a lesson, the object is deserialized in a docker container, so this would not cause any real damage.
                 <h1>Patch</h1>
                 <p>The vulnerability stems from the inherent danger in deserializing user-controlled information. To patch it, we have two options:
                     <ul class="aligned-list">
                         <li>Don't store the serialized comments in a place where users can alter them</li>
                         <li>Don't serialize and deserialize them as potentially dangerous objects</li>
                     </ul>
-                    For this lesson, we will choose the second option. Instead of serializing the comments as objects using <code>pickle</code>, we will serialize them as a JSON list. JSON cannot encode arbitrary objects, which is what makes <code>pickle</code> dangerous.
+                    For this lesson, we will choose the second option. Instead of serializing the comments as objects using <code>pickle</code>, we will serialize them as a JSON list. Unlike <code>pickle</code>, JSON cannot serialize and deserialize arbitrary and potentially dangerous objects.
                 </p>
                 <p>Click on the Editor tab in the top right. To save the comments as JSON, we will need to convert them to dictionaries first. Add this code to the <code>Comment</code> class:</p>
-                <textarea class="code-block">
+                <textarea id="code-block-2" class="code-block">
     def to_dict(self):
         return {"text": self.text, "username": self.username}
     @staticmethod
     def from_dict(data):
         return Comment(data["text"], data["username"])</textarea>
                 <p>Next, replace the <code>save_comments</code> method with this:</p>
-                <textarea class="code-block">
+                <textarea id="code-block-3" class="code-block">
 def save_comments(comments):
     # converts list of Comment objects to a list of dicts
     comment_dicts = [comment.to_dict() for comment in comments]
     json_string = json.dumps(comment_dicts)
     cookie_manager.save_cookie("comments", json_string)</textarea>
                 <p>Finally, replace the <code>load_comments</code> method with this:</p>
-                <textarea class="code-block">
+                <textarea id="code-block-4" class="code-block">
 def load_comments():
     cookie = cookie_manager.get_cookie("comments")
     if cookie:
@@ -311,11 +310,11 @@ def load_comments():
                 <div class="sandbox-title">
                     <h1>TV Show Forum</h1>
                 </div>
-                <form id="commentForm">
-                    <textarea id="commentText" placeholder="Comment" rows="4"></textarea>
+                <form id="comment-form">
+                    <textarea id="comment-text" placeholder="Comment" rows="4"></textarea>
                     <div class="form-bottom-row">
-                        <input type="text" id="commentUsername" placeholder="Username">
-                        <button type="submit">Submit</button>
+                        <input type="text" id="comment-username" placeholder="Username">
+                        <button id="submit-comment-btn" type="submit">Submit</button>
                     </div>
                 </form>
                 <hr style="margin: 20px 0;">
@@ -326,30 +325,27 @@ def load_comments():
                     </div>
                     </template>
                 <div id="comment-container"></div>
-                <button id="resetCommentsBtn" onclick="resetComments()">Reset Comments</button>
+                <button id="reset-comments-btn" onclick="resetComments()">Reset Comments</button>
             </div>
 
             <div id="editor" class="tab-content">
-                <textarea id="editorArea"></textarea>
-                <button id="resetCodeBtn" onclick="resetCode()">Reset Code</button>
+                <textarea id="editor-area"></textarea>
+                <button id="reset-code-btn" onclick="resetCode()">Reset Code</button>
             </div>
         </div>
 
     <script>
-        fetch("/set-session-id", {
-            credentials: "include"  // 🔑 ensures the cookie is stored
-        })
 
         let defaultCode = "";
         const userCodeKey = "user-code"
-        const editor = document.getElementById("editorArea");
+        const editor = document.getElementById("editor-area");
         const codeMirrorEditor = CodeMirror.fromTextArea(editor, {
             mode: "python",
             lineNumbers: true,
             theme: "monokai" 
         });
         const defaultMessages = "[\"I love this show!\", \"I thought the ending was bad.\"]";
-        const editorArea = document.getElementById("editorArea");
+        const editorArea = document.getElementById("editor-area");
 
         codeMirrorEditor.on("change", () => {
             if (codeMirrorEditor.getValue() != defaultCode) {
@@ -362,21 +358,23 @@ def load_comments():
             //resizeCodeMirrorToContent();
         });
 
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
-            if (tabId === "editor") {
-                setTimeout(() => codeMirrorEditor.refresh(), 0); // 👈 Force refresh after showing tab
-            }
-        }
+        initializeCodeBlocks();
 
-        function resetCode() {
-            localStorage.removeItem(userCodeKey);
-            codeMirrorEditor.setValue(defaultCode);
-            updateUserCode(defaultCode);
-        }
+        fetch("/set-session-id", {
+            credentials: "include"  // ensures cookie is stored
+        }).then(res => res.text())
+        .then(data => {
+            return fetch("/static/default_user_code.py")
+        })
+        .then(res => res.text())
+        .then(code => {
+            defaultCode = code;
+            return setUserCode();
+        })
+        .then(() => loadComments())
+        .catch(console.error);
+
+        //resizeCodeMirrorToContent();
 
         function setUserCode() {
             let userCode = localStorage.getItem(userCodeKey);
@@ -384,17 +382,33 @@ def load_comments():
                 userCode = defaultCode;
             }
             codeMirrorEditor.setValue(userCode);
-            updateUserCode(userCode);
+            return updateUserCode(userCode);
         }
 
         function updateUserCode(userCode) {
-            fetch("/set-user-code", {
+            return fetch("/set-user-code", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ "user-code": userCode })
             });
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            if (tabId === "editor") {
+                setTimeout(() => codeMirrorEditor.refresh(), 0); // force refresh after showing tab
+            }
+        }
+
+        function resetCode() {
+            localStorage.removeItem(userCodeKey);
+            codeMirrorEditor.setValue(defaultCode);
+            updateUserCode(defaultCode);
         }
 
         function initializeCodeBlocks() {
@@ -408,16 +422,6 @@ def load_comments():
             );
         }
 
-        function fetchDefaultCode() {
-            fetch("/static/default_user_code.py")
-                .then(res => res.text())
-                .then(code => {
-                    defaultCode = code;
-                    setUserCode();
-                    loadComments();
-                });
-        }
-
         function resizeCodeMirrorToContent() {
             const lineCount = codeMirrorEditor.lineCount();
             const lineHeight = 21;
@@ -429,13 +433,9 @@ def load_comments():
             console.log(getComputedStyle(codeMirrorEditor.getWrapperElement()));
         }
 
-        fetchDefaultCode();
-        initializeCodeBlocks();
-        //resizeCodeMirrorToContent();
-
-        const form = document.getElementById("commentForm");
-        const textInput = document.getElementById("commentText");
-        const usernameInput = document.getElementById("commentUsername");
+        const form = document.getElementById("comment-form");
+        const textInput = document.getElementById("comment-text");
+        const usernameInput = document.getElementById("comment-username");
         const commentsTemplate = document.getElementById("comment-template");
         const commentsContainer = document.getElementById("comment-container");
         let comments = [];

@@ -87,6 +87,9 @@ def load_comments(cookies, user_code):
             volumes={tmp: {"bind": "/app", "mode": "ro"}},
             remove=True,
             stdout=True,
+            mem_limit="128m",
+            network_disabled=True,
+            security_opt=["no-new-privileges"]
         )
 
     # returns a json string of a list of dicts
@@ -120,8 +123,10 @@ def save_comments(response, user_code, comments):
             volumes={tmp: {"bind": "/app", "mode": "ro"}},
             remove=True,
             stdout=True,
+            mem_limit="128m",
+            network_disabled=True,
+            security_opt=["no-new-privileges"]
         )
     output = container.decode()
     key, value = output.split(";", 1)
-    print(output)
     response.set_cookie(key, value)

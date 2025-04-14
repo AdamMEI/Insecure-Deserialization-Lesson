@@ -1,9 +1,0 @@
-Website contains left and right partitions.
-Left partition contains information and instructions on the lesson, vulnerability, exploitation, and patching.
-Right side contains a sandbox and a code editor.
-
-The sandbox represents a TV show forum. Users submit comments with their thoughts on the show alongside their username (usernames are not unique, they can choose to submit their comment alongside any username they want).
-
-Load Comments: The front end requests comment info from the main python app. The main python app then runs a docker instance that runs predefined code to create a file and add serialized comments to that file. These comments are given to it by the main python app. It then runs user code to declare the load function. The load function is then run within the instance to deserialize the comments and the results are printed out as a JSON string to the main python app, which then returns that string to the front end.
-
-Save Comments: The front end posts comment info to the main python app. The main python app then runs a docker instance that runs user code 

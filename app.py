@@ -3,11 +3,11 @@ from flask_cors import CORS
 import docker_management
 import uuid
 import json
+import redis
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-
-user_code = {}
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 @app.route("/")
 def index():
@@ -22,9 +22,11 @@ def load_comments():
     session_id = request.cookies.get("session_id")
     if not session_id:
         return {"error": "no session"}, 403
-    if session_id not in user_code:
-        return {"error": "haven't set user_code"}, 400
-    comments_string = docker_management.load_comments(request.cookies, user_code[session_id])
+    code = r.get(session_id)
+    if not code:
+        print("haven't set user code")
+        return {"error": "haven't set user code"}, 400
+    comments_string = docker_management.load_comments(request.cookies, code)
     try:
         comments = json.loads(comments_string)
         return comments
@@ -36,14 +38,15 @@ def save_comments():
     session_id = request.cookies.get("session_id")
     if not session_id:
         return {"error": "no session"}, 403
-    if session_id not in user_code:
-        print("t")
-        return {"error": "haven't set user_code"}, 400
+    code = r.get(session_id)
+    if not code:
+        print("haven't set user code")
+        return {"error": "haven't set user code"}, 400
     comments = request.get_json()
     if comments == None:
         return {"error": "no comments"}, 400
     response = make_response("Saved comments")
-    docker_management.save_comments(response, user_code[session_id], comments)
+    docker_management.save_comments(response, code, comments)
     return response
 
 @app.route("/set-user-code", methods=["POST"])
@@ -53,8 +56,8 @@ def set_user_code():
         return {"error": "no session"}, 403
     code = request.get_json().get("user-code")
     if not code:
-        return {"error": "no user_code"}, 400
-    user_code[session_id] = code
+        return {"error": "no user code"}, 400
+    r.set(session_id, code)
     return {"status": "ok"}
 
 @app.route("/set-session-id", methods=["GET"])
